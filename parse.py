@@ -8,7 +8,7 @@ import numpy as np
 
 def main():
 
-    file = sys.argv[0]
+    file = sys.argv[1]
 
     with open(file) as tsvfile:
         reader = csv.reader(tsvfile, delimiter='\t')
