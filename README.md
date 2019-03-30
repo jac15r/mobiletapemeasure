@@ -22,7 +22,7 @@ From a command-line,
 
 The script is incorrectly deriving instead of integrating.
 
-This means that its "velocity" is actually "jerk" (m/s^3), and its "acceleration" is actually "snap" (m/s^4)
+This means that its "velocity" is actually "jerk" (m/s^3), and its "distance" is actually "snap" (m/s^4)
 
 ### Possible Solution
 
