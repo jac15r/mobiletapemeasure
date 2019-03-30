@@ -20,7 +20,7 @@ From a command-line,
 
 ## Things that need to be done
 
-The script is incorrectly deriving instead of integrathing.
+The script is incorrectly deriving instead of integrating.
 
 This means that its "velocity" is actually "jerk" (m/s^3), and its "acceleration" is actually "snap" (m/s^4)
 
