@@ -6,7 +6,10 @@ from scipy.signal import lfilter
 import numpy as np
 
 def main():
-    with open('test3.tsv') as tsvfile:
+
+    sys.argv[0] = file
+
+    with open(file) as tsvfile:
         reader = csv.reader(tsvfile, delimiter='\t')
 
         frame = []
