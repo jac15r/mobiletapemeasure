@@ -18,3 +18,13 @@ From a command-line,
 
 `python parse.py [filename]`
 
+## Things that need to be done
+
+The script is incorrectly deriving instead of integrathing.
+
+This means that its "velocity" is actually "jerk" (m/s^3), and its "acceleration" is actually "snap" (m/s^4)
+
+### Possible Solution
+
+We are already using the scipy library, which has function calls for this. Perhaps the second option listed [here](https://stackoverflow.com/questions/17602076/how-do-i-integrate-two-1-d-data-arrays-in-python)?
+
