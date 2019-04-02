@@ -4,6 +4,7 @@ import matplotlib
 matplotlib.use("Qt5Agg")
 import matplotlib.pyplot as plt
 from scipy.signal import lfilter
+from scipy import integrate
 import numpy as np
 
 # Imports the data from the specified file
@@ -17,11 +18,22 @@ def importData(file):
         yacc = []
         zacc = []
 
+        #Manipulate this to remove noisy data, perhaps?
+        cutoff = -1000
         for row in reader:
-            frame.append(float(row[0]))
-            xacc.append(float(row[2]))
-            yacc.append(float(row[3]))
-            zacc.append(float(row[4]))
+            frame.append(float(row[0])/410)
+            if float(row[2]) < cutoff:
+                xacc.append(0.0)
+            else:
+                xacc.append(float(row[2]))
+            if float(row[3]) < cutoff:
+                yacc.append(0.0)
+            else:
+                yacc.append(float(row[3]))
+            if float(row[4]) < cutoff:
+                zacc.append(0.0)
+            else:
+                zacc.append(float(row[4]))
 
     return frame,xacc,yacc,zacc
 
@@ -40,19 +52,23 @@ def derive(xdata,ydata,zdata,frame):
 
     return np.diff(xdata) / np.diff(frame), np.diff(ydata) / np.diff(frame), np.diff(zdata) / np.diff(frame)
 
-def plot(masterData):
+def integrate_data(xdata,ydata,zdata,frame):
 
-    plt.plot(masterData[0],masterData[3],label="X Acceleration")
-    plt.plot(masterData[0],masterData[4],label="Y Acceleration")
-    plt.plot(masterData[0],masterData[5],label="Z Acceleration")
+    return integrate.cumtrapz(xdata,frame, initial=0), integrate.cumtrapz(ydata,frame, initial=0), integrate.cumtrapz(zdata,frame, initial=0)
 
-    plt.plot(masterData[1],masterData[6],label="X Velocity")
-    plt.plot(masterData[1],masterData[7],label="Y Velocity")
-    plt.plot(masterData[1],masterData[8],label="Z Velocity")
+def plot(frame,xacc,yacc,zacc,xvel,yvel,zvel,xdist,ydist,zdist):
 
-    plt.plot(masterData[2],masterData[9],label="X Position")
-    plt.plot(masterData[2],masterData[10],label="Y Position")
-    plt.plot(masterData[2],masterData[11],label="Z Position")
+    plt.plot(frame,xacc,label="X Acceleration")
+    plt.plot(frame,yacc,label="Y Acceleration")
+    # plt.plot(frame,zacc,label="Z Acceleration")
+
+    plt.plot(frame,xvel,label="X Velocity")
+    plt.plot(frame,yvel,label="Y Velocity")
+    # plt.plot(frame,zvel,label="Z Velocity")
+
+    plt.plot(frame,xdist,label="X Position")
+    plt.plot(frame,ydist,label="Y Position")
+    # plt.plot(frame,zdist,label="Z Position")
 
     plt.xlabel('Time (1/40 sec)')
     plt.ylabel('Acceleration Values')
@@ -71,26 +87,16 @@ def main():
     frame,xacc,yacc,zacc = importData(file)
 
     # Smoothed versions of acceleration data. Currently unused, but available 
-    # xacc_smoothed,yacc_smoothed,zacc_smoothed = smoothData(xacc,yacc,zacc)
+    xacc_smoothed,yacc_smoothed,zacc_smoothed = smoothData(xacc,yacc,zacc)
 
-    ''' 
-        This is incorrect and needs fixing
-        Rather than derive, we should be integrating.
-        While I attempted to get velocity, I actually calculated "jerk", or,
-        the change in acceleration over time
-    '''
-    xvel,yvel,zvel = derive(xacc,yacc,zacc,frame)
-    frameprime = (np.array(frame)[:-1] + np.array(frame)[1:]) / 2
+    # Integrate the values to get velocity
+    xvel,yvel,zvel = integrate_data(xacc_smoothed,yacc_smoothed,zacc_smoothed,frame)
 
-    ''' This is the same problem as above '''
-    xdist,ydist,zdist = derive(xvel,yvel,zvel,frameprime)
-    frameprimeprime = (np.array(frameprime)[:-1] + np.array(frameprime)[1:]) / 2
-
-    # Creating a list of the data
-    masterData = [frame,frameprime,frameprimeprime,xacc,yacc,zacc,xvel,yvel,zvel,xdist,ydist,zdist]
+    # Integrate the velocity to get distance
+    xdist,ydist,zdist = integrate_data(xvel,yvel,zvel,frame)
 
     # Plotting the data to a graph to view
-    plot(masterData)
+    plot(frame,xacc,yacc,zacc,xvel,yvel,zvel,xdist,ydist,zdist)
     return
 
 if __name__ == "__main__":
