@@ -20,11 +20,10 @@ From a command-line,
 
 ## Things that need to be done
 
-The script is incorrectly deriving instead of integrating.
+Integration has been coded, but the readings are way too high for distance.
 
-This means that its "velocity" is actually "jerk" (m/s^3), and its "distance" is actually "snap" (m/s^4)
+We need to look into ways of cleaning up acceleration readings. Perhaps a cutoff value to get rid of noise? Maybe **Kalman filtering**?
 
-### Possible Solution
+## What has been done
 
-We are already using the scipy library, which has function calls for this. Perhaps the second option listed [here](https://stackoverflow.com/questions/17602076/how-do-i-integrate-two-1-d-data-arrays-in-python)?
-
+Using this information [here](https://stackoverflow.com/questions/17602076/how-do-i-integrate-two-1-d-data-arrays-in-python), we implemented a method of using the trapezoidal method of integration to get velocity and distance.
