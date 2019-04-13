@@ -16,7 +16,7 @@ A proof-of-concept attempt to use a phone's accelerometer
 
 From a command-line,
 
-`python parse.py [filename]`
+`python parse.py [calibrateFile(try 'calibrate.tsv')] [filename]`
 
 ## Things that need to be done
 
