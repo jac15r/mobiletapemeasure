@@ -18,22 +18,11 @@ def importData(file):
         yacc = []
         zacc = []
 
-        #Manipulate this to remove noisy data, perhaps?
-        cutoff = 1.0
         for row in reader:
-            frame.append(float(row[0])/410)
-            if abs(float(row[2])) < cutoff:
-                xacc.append(0.0)
-            else:
-                xacc.append(float(row[2]))
-            if abs(float(row[3])) < cutoff:
-                yacc.append(0.0)
-            else:
-                yacc.append(float(row[3]))
-            if abs(float(row[4])) < cutoff:
-                zacc.append(0.0)
-            else:
-                zacc.append(float(row[4]))
+            frame.append(float(row[1])/1000)
+            xacc.append(float(row[2]))
+            yacc.append(float(row[3]))
+            zacc.append(float(row[4]))
 
     return frame,xacc,yacc,zacc
 
@@ -58,16 +47,16 @@ def integrate_data(xdata,ydata,zdata,frame):
 
 def plot(frame,xacc,yacc,zacc,xvel,yvel,zvel,xdist,ydist,zdist):
 
-    # plt.plot(frame,xacc,label="X Acceleration")
-    # plt.plot(frame,yacc,label="Y Acceleration")
-    # plt.plot(frame,zacc,label="Z Acceleration")
+    plt.plot(frame,xacc,label="X Acceleration")
+    plt.plot(frame,yacc,label="Y Acceleration")
+    plt.plot(frame,zacc,label="Z Acceleration")
 
-    plt.plot(frame,xvel,label="X Velocity")
-    plt.plot(frame,yvel,label="Y Velocity")
+    # plt.plot(frame,xvel,label="X Velocity")
+    # plt.plot(frame,yvel,label="Y Velocity")
     # plt.plot(frame,zvel,label="Z Velocity")
 
-    plt.plot(frame,xdist,label="X Position")
-    plt.plot(frame,ydist,label="Y Position")
+    # plt.plot(frame,xdist,label="X Position")
+    # plt.plot(frame,ydist,label="Y Position")
     # plt.plot(frame,zdist,label="Z Position")
 
     plt.xlabel('Time (1/40 sec)')
@@ -78,13 +67,55 @@ def plot(frame,xacc,yacc,zacc,xvel,yvel,zvel,xdist,ydist,zdist):
     plt.show()
     return
 
+def removeGravity(xacc,yacc,zacc,file):
+
+    with open(file) as tsvfile:
+        reader = csv.reader(tsvfile, delimiter='\t')
+
+        xav = 0
+        yav = 0
+        zav = 0
+        total = 0
+
+        for row in reader:
+            xav += float(row[2])
+            yav += float(row[3])
+            zav += float(row[4])
+            total = int(row[0])
+        print(total)
+
+    # One of these is gravity   
+    xav = xav/total
+    yav = yav/total
+    zav = zav/total
+
+    # Remove gravity from the correct
+    if xav == max(xav,yav,zav):
+        print("X axis is gravity")
+        for i in range(len(xacc)):
+            xacc[i] = xacc[i] - xav
+    elif yav == max(xav,yav,zav):
+        print("Y axis is gravity")
+        for i in range(len(yacc)):
+            yacc[i] = yacc[i] - yav
+    else:
+        print("Z axis is gravity")
+        for i in range(len(zacc)):
+            zacc[i] = zacc[i] - zav
+
+    return xacc,yacc,zacc
+
 def main():
 
     # get filename to use
-    file = sys.argv[1]
+    calibrateFile = sys.argv[1]
+    file = sys.argv[2]
 
     # Create lists of time, x/y/z acceleration values
     frame,xacc,yacc,zacc = importData(file)
+
+    # Find the axis affected by gravity, remove the gravity readings
+    xacc,yacc,zacc = removeGravity(xacc,yacc,zacc,calibrateFile)
 
     # Smoothed versions of acceleration data. Currently unused, but available 
     # xacc_smoothed,yacc_smoothed,zacc_smoothed = smoothData(xacc,yacc,zacc)
