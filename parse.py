@@ -67,7 +67,7 @@ def plot(frame,xacc,yacc,zacc,xvel,yvel,zvel,xdist,ydist,zdist):
     plt.show()
     return
 
-def removeGravity(xacc,yacc,zacc,file):
+"""def removeGravity(xacc,yacc,zacc,file):
 
     with open(file) as tsvfile:
         reader = csv.reader(tsvfile, delimiter='\t')
@@ -103,6 +103,55 @@ def removeGravity(xacc,yacc,zacc,file):
         for i in range(len(zacc)):
             zacc[i] = zacc[i] - zav
 
+    return xacc,yacc,zacc """
+
+#Removing gravity without reading from the file again.
+def removeGravity2(xacc,yacc,zacc):
+
+    total = len(xacc)
+    xavg = 0
+    yavg = 0
+    zavg = 0
+
+    i = 0
+    while i < total:
+        xavg += xacc[i]
+        yavg += yacc[i]
+        zavg += zacc[i]
+        i += 1
+
+    xavg = xavg/total
+    yavg = yavg/total
+    zavg = zavg/total
+
+    if xavg == max(xavg,yavg,zavg):
+        print("X axis is gravity")
+        for i in range(len(xacc)):
+            xacc[i] = xacc[i] - xavg
+    elif yavg == max(xavg,yavg,zavg):
+        print("Y axis is gravity")
+        for i in range(len(yacc)):
+            yacc[i] = yacc[i] - yavg
+    else:
+        print("Z axis is gravity")
+        for i in range(len(zacc)):
+            zacc[i] = zacc[i] - zavg
+    
+    return xacc,yacc,zacc
+
+def ignoreNoise(xacc, yacc, zacc, file):
+
+    total = len(xacc)
+    i = 0
+    while i < total:
+        if(xacc[i] <= 3 and xacc[i] >= -3):
+            xacc[i] = 0
+        if(yacc[i] <= 3 and yacc[i] >= -3):
+            yacc[i] = 0
+        if(zacc[i] <= 3 and zacc[i] >= -3):
+            zacc[i] = 0
+        i += 1
+    
     return xacc,yacc,zacc
 
 def main():
@@ -115,7 +164,13 @@ def main():
     frame,xacc,yacc,zacc = importData(file)
 
     # Find the axis affected by gravity, remove the gravity readings
-    xacc,yacc,zacc = removeGravity(xacc,yacc,zacc,calibrateFile)
+    #xacc,yacc,zacc = removeGravity(xacc,yacc,zacc,calibrateFile)
+
+    # Find the axis affected by gravity, remove the gravity readings
+    xacc,yacc,zacc = removeGravity2(xacc,yacc,zacc)
+
+    #Find noise values, set the noise values to zero
+    xacc,yacc,zacc = ignoreNoise(xacc, yacc, zacc, file)
 
     # Smoothed versions of acceleration data. Currently unused, but available 
     # xacc_smoothed,yacc_smoothed,zacc_smoothed = smoothData(xacc,yacc,zacc)
