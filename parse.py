@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import lfilter
 from scipy import integrate
 import numpy as np
+import math
 
 # Imports the data from the specified file
 def importData(file):
@@ -47,27 +48,28 @@ def integrate_data(xdata,ydata,zdata,frame):
 
 def plot(frame,xacc,yacc,zacc,xvel,yvel,zvel,xdist,ydist,zdist):
 
-    plt.plot(frame,xacc,label="X Acceleration")
-    plt.plot(frame,yacc,label="Y Acceleration")
-    plt.plot(frame,zacc,label="Z Acceleration")
+    # plt.plot(frame,xacc,label="X Acceleration")
+    # plt.plot(frame,yacc,label="Y Acceleration")
+    # plt.plot(frame,zacc,label="Z Acceleration")
 
     # plt.plot(frame,xvel,label="X Velocity")
     # plt.plot(frame,yvel,label="Y Velocity")
     # plt.plot(frame,zvel,label="Z Velocity")
 
-    # plt.plot(frame,xdist,label="X Position")
-    # plt.plot(frame,ydist,label="Y Position")
-    # plt.plot(frame,zdist,label="Z Position")
+    plt.plot(frame,xdist,label="X Position")
+    plt.plot(frame,ydist,label="Y Position")
+    plt.plot(frame,zdist,label="Z Position")
 
-    plt.xlabel('Time (1/40 sec)')
-    plt.ylabel('Acceleration Values')
+    plt.xlabel('Milliseconds')
+    plt.ylabel('Data Values')
     plt.title('Acceleration over time')
     plt.legend()
 
     plt.show()
     return
 
-"""def removeGravity(xacc,yacc,zacc,file):
+# This function removes noise AND gravity
+def removeNoise(xacc,yacc,zacc,file):
 
     with open(file) as tsvfile:
         reader = csv.reader(tsvfile, delimiter='\t')
@@ -82,30 +84,62 @@ def plot(frame,xacc,yacc,zacc,xvel,yvel,zvel,xdist,ydist,zdist):
             yav += float(row[3])
             zav += float(row[4])
             total = int(row[0])
-        print(total)
+        # print(total)
 
     # One of these is gravity   
     xav = xav/total
     yav = yav/total
     zav = zav/total
 
+    print(xav)
+    print(yav)
+    print(zav)
+
     # Remove gravity from the correct
     if xav == max(xav,yav,zav):
         print("X axis is gravity")
+        new_average = 0
         for i in range(len(xacc)):
             xacc[i] = xacc[i] - xav
+            new_average += xacc[i]
+        xav = new_average/len(xacc)
     elif yav == max(xav,yav,zav):
         print("Y axis is gravity")
+        new_average = 0
         for i in range(len(yacc)):
             yacc[i] = yacc[i] - yav
+            new_average += yacc[i]
+        yav = new_average/len(yacc)
     else:
         print("Z axis is gravity")
+        new_average = 0
         for i in range(len(zacc)):
             zacc[i] = zacc[i] - zav
+            new_average += zacc[i]
+        zav = new_average/len(zacc)
+        print(zav)
 
-    return xacc,yacc,zacc """
+    for i in range(len(xacc)):
+        if xacc[i] < abs(xav):
+            xacc[i] = 0
+    for i in range(len(yacc)):
+        if yacc[i] < abs(yav):
+            yacc[i] = 0
+    for i in range(len(zacc)):
+        if zacc[i] < abs(zav):
+            zacc[i] = 0
+
+    return xacc,yacc,zacc
 
 #Removing gravity without reading from the file again.
+""" Edit - removed due to problem: This only works if
+    average movement acceleration is less than gravity.
+    This should be the case, but can't be ensured.
+    Because of which, we HAVE to use the calibration
+    data involving the phone staying still.
+
+    Update: RemoveNoise now removes gravity as well
+    as noise. Separate functions are no longer needed.
 def removeGravity2(xacc,yacc,zacc):
 
     total = len(xacc)
@@ -138,21 +172,7 @@ def removeGravity2(xacc,yacc,zacc):
             zacc[i] = zacc[i] - zavg
     
     return xacc,yacc,zacc
-
-def ignoreNoise(xacc, yacc, zacc, file):
-
-    total = len(xacc)
-    i = 0
-    while i < total:
-        if(xacc[i] <= 3 and xacc[i] >= -3):
-            xacc[i] = 0
-        if(yacc[i] <= 3 and yacc[i] >= -3):
-            yacc[i] = 0
-        if(zacc[i] <= 3 and zacc[i] >= -3):
-            zacc[i] = 0
-        i += 1
-    
-    return xacc,yacc,zacc
+"""
 
 def main():
 
@@ -167,10 +187,11 @@ def main():
     #xacc,yacc,zacc = removeGravity(xacc,yacc,zacc,calibrateFile)
 
     # Find the axis affected by gravity, remove the gravity readings
-    xacc,yacc,zacc = removeGravity2(xacc,yacc,zacc)
+    # Update: This removes gravity AND noise now!
+    xacc,yacc,zacc = removeNoise(xacc,yacc,zacc,calibrateFile)
 
     #Find noise values, set the noise values to zero
-    xacc,yacc,zacc = ignoreNoise(xacc, yacc, zacc, file)
+    # xacc,yacc,zacc = ignoreNoise(xacc, yacc, zacc, calibrateFile)
 
     # Smoothed versions of acceleration data. Currently unused, but available 
     # xacc_smoothed,yacc_smoothed,zacc_smoothed = smoothData(xacc,yacc,zacc)
@@ -180,6 +201,10 @@ def main():
 
     # Integrate the velocity to get distance
     xdist,ydist,zdist = integrate_data(xvel,yvel,zvel,frame)
+
+    # Adding the distances of the two non-gravity axes together
+    # Is this close to the correct distance??
+    print(xdist[-1]+ydist[-1])
 
     # Plotting the data to a graph to view
     plot(frame,xacc,yacc,zacc,xvel,yvel,zvel,xdist,ydist,zdist)
