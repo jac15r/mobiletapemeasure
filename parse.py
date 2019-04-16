@@ -202,9 +202,30 @@ def main():
     # Integrate the velocity to get distance
     xdist,ydist,zdist = integrate_data(xvel,yvel,zvel,frame)
 
-    # Adding the distances of the two non-gravity axes together
     # Is this close to the correct distance??
-    print(xdist[-1]+ydist[-1])
+    xdistsm,ydistsm,zdistsm = smoothData(xdist,ydist,zdist)
+
+    # total distances
+    x = xdist[-1]
+    y = ydist[-1]    
+    z = zdist[-1]
+
+    # total distances, smoothed
+    xsm = xdistsm[-1]
+    ysm = ydistsm[-1]    
+    zsm = zdistsm[-1]
+
+    # Distances, measured differently
+    totaldistance = math.sqrt(x*x + y*y + z*z)
+    totaldistance_no_z = math.sqrt(x*x + y*y)
+    totaldistancesm = math.sqrt(xsm*xsm + ysm*ysm + zsm*zsm)
+    totaldistancesm_no_z = math.sqrt(xsm*xsm + ysm*ysm)
+
+    print("\nresults:")
+    print("Total Distance: %f" % totaldistance)
+    print("Total Distance (no Z): %f" % totaldistance_no_z) # This one seems the most accurate!
+    print("Total Distance, Smoothed: %f" % totaldistancesm)
+    print("TotalDistance, smoothed (no Z): %f" % totaldistancesm_no_z)
 
     # Plotting the data to a graph to view
     plot(frame,xacc,yacc,zacc,xvel,yvel,zvel,xdist,ydist,zdist)
