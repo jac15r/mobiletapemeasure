@@ -131,49 +131,6 @@ def removeNoise(xacc,yacc,zacc,file):
 
     return xacc,yacc,zacc
 
-#Removing gravity without reading from the file again.
-""" Edit - removed due to problem: This only works if
-    average movement acceleration is less than gravity.
-    This should be the case, but can't be ensured.
-    Because of which, we HAVE to use the calibration
-    data involving the phone staying still.
-
-    Update: RemoveNoise now removes gravity as well
-    as noise. Separate functions are no longer needed.
-def removeGravity2(xacc,yacc,zacc):
-
-    total = len(xacc)
-    xavg = 0
-    yavg = 0
-    zavg = 0
-
-    i = 0
-    while i < total:
-        xavg += xacc[i]
-        yavg += yacc[i]
-        zavg += zacc[i]
-        i += 1
-
-    xavg = xavg/total
-    yavg = yavg/total
-    zavg = zavg/total
-
-    if xavg == max(xavg,yavg,zavg):
-        print("X axis is gravity")
-        for i in range(len(xacc)):
-            xacc[i] = xacc[i] - xavg
-    elif yavg == max(xavg,yavg,zavg):
-        print("Y axis is gravity")
-        for i in range(len(yacc)):
-            yacc[i] = yacc[i] - yavg
-    else:
-        print("Z axis is gravity")
-        for i in range(len(zacc)):
-            zacc[i] = zacc[i] - zavg
-    
-    return xacc,yacc,zacc
-"""
-
 def main():
 
     # get filename to use
@@ -184,14 +141,7 @@ def main():
     frame,xacc,yacc,zacc = importData(file)
 
     # Find the axis affected by gravity, remove the gravity readings
-    #xacc,yacc,zacc = removeGravity(xacc,yacc,zacc,calibrateFile)
-
-    # Find the axis affected by gravity, remove the gravity readings
-    # Update: This removes gravity AND noise now!
     xacc,yacc,zacc = removeNoise(xacc,yacc,zacc,calibrateFile)
-
-    #Find noise values, set the noise values to zero
-    # xacc,yacc,zacc = ignoreNoise(xacc, yacc, zacc, calibrateFile)
 
     # Smoothed versions of acceleration data. Currently unused, but available 
     # xacc_smoothed,yacc_smoothed,zacc_smoothed = smoothData(xacc,yacc,zacc)
@@ -203,7 +153,7 @@ def main():
     xdist,ydist,zdist = integrate_data(xvel,yvel,zvel,frame)
 
     # Is this close to the correct distance??
-    xdistsm,ydistsm,zdistsm = smoothData(xdist,ydist,zdist)
+    # xdistsm,ydistsm,zdistsm = smoothData(xdist,ydist,zdist)
 
     # total distances
     x = xdist[-1]
@@ -211,21 +161,24 @@ def main():
     z = zdist[-1]
 
     # total distances, smoothed
-    xsm = xdistsm[-1]
-    ysm = ydistsm[-1]    
-    zsm = zdistsm[-1]
+    # xsm = xdistsm[-1]
+    # ysm = ydistsm[-1]    
+    # zsm = zdistsm[-1]
 
     # Distances, measured differently
     totaldistance = math.sqrt(x*x + y*y + z*z)
     totaldistance_no_z = math.sqrt(x*x + y*y)
-    totaldistancesm = math.sqrt(xsm*xsm + ysm*ysm + zsm*zsm)
-    totaldistancesm_no_z = math.sqrt(xsm*xsm + ysm*ysm)
+    # totaldistancesm = math.sqrt(xsm*xsm + ysm*ysm + zsm*zsm)
+    # totaldistancesm_no_z = math.sqrt(xsm*xsm + ysm*ysm)
 
     print("\nresults:")
+    print("X Distance: %f" % x)
+    print("Y Distance: %f" % y)
+    print("Z Distance: %f" % z)
     print("Total Distance: %f" % totaldistance)
     print("Total Distance (no Z): %f" % totaldistance_no_z) # This one seems the most accurate!
-    print("Total Distance, Smoothed: %f" % totaldistancesm)
-    print("TotalDistance, smoothed (no Z): %f" % totaldistancesm_no_z)
+    # print("Total Distance, Smoothed: %f" % totaldistancesm)
+    # print("TotalDistance, smoothed (no Z): %f" % totaldistancesm_no_z)
 
     # Plotting the data to a graph to view
     plot(frame,xacc,yacc,zacc,xvel,yvel,zvel,xdist,ydist,zdist)
