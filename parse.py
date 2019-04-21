@@ -120,13 +120,13 @@ def removeNoise(xacc,yacc,zacc,file):
         print(zav)
 
     for i in range(len(xacc)):
-        if xacc[i] < abs(xav):
+        if abs(xacc[i]) < abs(xav*2.75): # !!! NEW VALUE !!!
             xacc[i] = 0
     for i in range(len(yacc)):
-        if yacc[i] < abs(yav):
+        if abs(yacc[i]) < abs(yav*2.75):
             yacc[i] = 0
     for i in range(len(zacc)):
-        if zacc[i] < abs(zav):
+        if abs(zacc[i]) < abs(zav*2.75):
             zacc[i] = 0
 
     return xacc,yacc,zacc
@@ -181,7 +181,7 @@ def main():
     # print("TotalDistance, smoothed (no Z): %f" % totaldistancesm_no_z)
 
     # Plotting the data to a graph to view
-    plot(frame,xacc,yacc,zacc,xvel,yvel,zvel,xdist,ydist,zdist)
+    # plot(frame,xacc,yacc,zacc,xvel,yvel,zvel,xdist,ydist,zdist)
     return
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 # Mobile Tape Measure
 
-A proof-of-concept attempt to use a phone's accelerometer
+A proof-of-concept attempt to use a phone's accelerometer to measure distance.
 
 ## Requirements
 
@@ -20,15 +20,21 @@ From a command-line,
 
 ## Things that need to be done
 
-Integration has been coded, but the readings are way too high for distance.
+* Improve accuracy of readings
+* Analyze data more
+* Improve capabilities beyond 2 meters
 
-We need to look into ways of cleaning up acceleration readings. Perhaps a cutoff value to get rid of noise? Maybe **Kalman filtering**?
+## Current Status
 
-## Changes did
+Accuracy between 1 and 2 meters (averaged):
 
-Added 'removenoise' function for filtering out noise.
-Added 'removeGravity2' function that doesn't need to read from file again. Might be helpful in speeding up.
+* with `average * 2.5` filter and Z, 110% the distance
+* with `average * 2.5` filter and no Z, roughly 100-110% distance
+* Average of these values roughly 110%
+* with `average * 2.75` filter and Z, between 92-107% distance
+* with `average * 2.75` and no Z, between 88-107% distance
+* Average of these values roughly 107%
 
-## What has been done
+These two total averages weighted equally and re-averaged gives us:
 
-Using this information [here](https://stackoverflow.com/questions/17602076/how-do-i-integrate-two-1-d-data-arrays-in-python), we implemented a method of using the trapezoidal method of integration to get velocity and distance.
+* Near exact measurements for 1 meter, 109% measurements for 2 meters.
