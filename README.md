@@ -16,25 +16,10 @@ A proof-of-concept attempt to use a phone's accelerometer to measure distance.
 
 From a command-line,
 
-`python parse.py [calibrateFile(try 'calibrate.tsv')] [filename]`
-
-## Things that need to be done
-
-* Improve accuracy of readings
-* Analyze data more
-* Improve capabilities beyond 2 meters
+`python parse.py [calibrateFile] [filenames (Recommended: 5 separate measurements)]`
 
 ## Current Status
 
-Accuracy between 1 and 2 meters (averaged):
+With measurements taken within 5-6 seconds, can yield measurement results approximately between 92% and 99% accuracy
 
-* with `average * 2.5` filter and Z, 110% the distance
-* with `average * 2.5` filter and no Z, roughly 100-110% distance
-* Average of these values roughly 110%
-* with `average * 2.75` filter and Z, between 92-107% distance
-* with `average * 2.75` and no Z, between 88-107% distance
-* Average of these values roughly 107%
-
-These two total averages weighted equally and re-averaged gives us:
-
-* Near exact measurements for 1 meter, 109% measurements for 2 meters.
+Anything with long distances or time measured will yield poor results, due to both human hand movement and sensitive accelerometers.

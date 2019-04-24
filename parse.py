@@ -69,7 +69,7 @@ def plot(frame,xacc,yacc,zacc,xvel,yvel,zvel,xdist,ydist,zdist):
     return
 
 # This function removes noise AND gravity
-def removeNoise(xacc,yacc,zacc,file):
+def removeNoise(xacc,yacc,zacc,file,threshold):
 
     with open(file) as tsvfile:
         reader = csv.reader(tsvfile, delimiter='\t')
@@ -91,96 +91,161 @@ def removeNoise(xacc,yacc,zacc,file):
     yav = yav/total
     zav = zav/total
 
-    print(xav)
-    print(yav)
-    print(zav)
+    # print(xav)
+    # print(yav)
+    # print(zav)
 
     # Remove gravity from the correct
     if xav == max(xav,yav,zav):
-        print("X axis is gravity")
+        # print("X axis is gravity")
         new_average = 0
         for i in range(len(xacc)):
             xacc[i] = xacc[i] - xav
             new_average += xacc[i]
         xav = new_average/len(xacc)
     elif yav == max(xav,yav,zav):
-        print("Y axis is gravity")
+        # print("Y axis is gravity")
         new_average = 0
         for i in range(len(yacc)):
             yacc[i] = yacc[i] - yav
             new_average += yacc[i]
         yav = new_average/len(yacc)
     else:
-        print("Z axis is gravity")
+        # print("Z axis is gravity")
         new_average = 0
         for i in range(len(zacc)):
             zacc[i] = zacc[i] - zav
             new_average += zacc[i]
         zav = new_average/len(zacc)
-        print(zav)
+        # print(zav)
 
     for i in range(len(xacc)):
-        if abs(xacc[i]) < abs(xav*2.75): # !!! NEW VALUE !!!
+        if abs(xacc[i]) < abs(xav*threshold):
             xacc[i] = 0
     for i in range(len(yacc)):
-        if abs(yacc[i]) < abs(yav*2.75):
+        if abs(yacc[i]) < abs(yav*threshold):
             yacc[i] = 0
     for i in range(len(zacc)):
-        if abs(zacc[i]) < abs(zav*2.75):
+        if abs(zacc[i]) < abs(zav*threshold):
             zacc[i] = 0
 
     return xacc,yacc,zacc
+
+def getDistance(file,calibrateFile,threshold=2.75):
+
+    frame,xacc,yacc,zacc = importData(file)
+
+    xacc,yacc,zacc = removeNoise(xacc,yacc,zacc,calibrateFile,threshold)
+    xvel,yvel,zvel = integrate_data(xacc,yacc,zacc,frame)
+    xdist,ydist,zdist = integrate_data(xvel,yvel,zvel,frame)
+
+    x = xdist[-1]
+    y = ydist[-1]    
+    z = zdist[-1]
+
+    totaldistance = math.sqrt(x*x + y*y + z*z)
+    totaldistance_no_z = math.sqrt(x*x + y*y)
+
+    return totaldistance,totaldistance_no_z
 
 def main():
 
     # get filename to use
     calibrateFile = sys.argv[1]
-    file = sys.argv[2]
 
-    # Create lists of time, x/y/z acceleration values
-    frame,xacc,yacc,zacc = importData(file)
+    files = []
 
-    # Find the axis affected by gravity, remove the gravity readings
-    xacc,yacc,zacc = removeNoise(xacc,yacc,zacc,calibrateFile)
+    for i in range(2,7):
+        files.append(sys.argv[i])
 
-    # Smoothed versions of acceleration data. Currently unused, but available 
-    # xacc_smoothed,yacc_smoothed,zacc_smoothed = smoothData(xacc,yacc,zacc)
+    distancesWithZLow = []
+    distancesNoZLow = []
 
-    # Integrate the values to get velocity
-    xvel,yvel,zvel = integrate_data(xacc,yacc,zacc,frame)
+    for file in files:
+        dist,distNoZ = getDistance(file, calibrateFile, 2.5)
+        distancesWithZLow.append(dist)
+        distancesNoZLow.append(distNoZ)
 
-    # Integrate the velocity to get distance
-    xdist,ydist,zdist = integrate_data(xvel,yvel,zvel,frame)
+    distancesWithZHigh = []
+    distancesNoZHigh = []
 
-    # Is this close to the correct distance??
-    # xdistsm,ydistsm,zdistsm = smoothData(xdist,ydist,zdist)
+    for file in files:
+        dist,distNoZ = getDistance(file, calibrateFile, 2.75)
+        distancesWithZHigh.append(dist)
+        distancesNoZHigh.append(distNoZ)
 
-    # total distances
-    x = xdist[-1]
-    y = ydist[-1]    
-    z = zdist[-1]
+    distancesWithZLowAverage = 0.0
+    distancesNoZLowAverage = 0.0
+    distancesWithZHighAverage = 0.0
+    distancesNoZHighAverage = 0.0
 
-    # total distances, smoothed
-    # xsm = xdistsm[-1]
-    # ysm = ydistsm[-1]    
-    # zsm = zdistsm[-1]
+    for i in range(len(files)):
+        distancesWithZLowAverage += distancesWithZLow[i]
+        distancesNoZLowAverage += distancesNoZLow[i]
+        distancesWithZHighAverage += distancesWithZHigh[i]
+        distancesNoZHighAverage += distancesNoZHigh[i]
 
-    # Distances, measured differently
-    totaldistance = math.sqrt(x*x + y*y + z*z)
-    totaldistance_no_z = math.sqrt(x*x + y*y)
-    # totaldistancesm = math.sqrt(xsm*xsm + ysm*ysm + zsm*zsm)
-    # totaldistancesm_no_z = math.sqrt(xsm*xsm + ysm*ysm)
+    distancesWithZLowAverage /= len(files)
+    distancesNoZLowAverage /= len(files)
+    distancesWithZHighAverage /= len(files)
+    distancesNoZHighAverage /= len(files)
+
+    LowAverage = (distancesWithZLowAverage + distancesNoZLowAverage) / 2
+    HighAverage = (distancesWithZHighAverage + distancesNoZHighAverage) / 2
+
+    OverallAverage = (LowAverage + HighAverage) / 2
 
     print("\nresults:")
-    print("X Distance: %f" % x)
-    print("Y Distance: %f" % y)
-    print("Z Distance: %f" % z)
-    print("Total Distance: %f" % totaldistance)
-    print("Total Distance (no Z): %f" % totaldistance_no_z) # This one seems the most accurate!
-    # print("Total Distance, Smoothed: %f" % totaldistancesm)
-    # print("TotalDistance, smoothed (no Z): %f" % totaldistancesm_no_z)
+    print("2.5 Threshold Average: %f" % LowAverage)
+    print("2.75 Threshold Average: %f" % HighAverage)
+    print("Final Calculated Distance: %f" % OverallAverage)
 
-    # Plotting the data to a graph to view
+    # file = sys.argv[2]
+
+    # # Create lists of time, x/y/z acceleration values
+    # frame,xacc,yacc,zacc = importData(file)
+
+    # # Find the axis affected by gravity, remove the gravity readings
+    # xacc,yacc,zacc = removeNoise(xacc,yacc,zacc,calibrateFile)
+
+    # # Smoothed versions of acceleration data. Currently unused, but available 
+    # # xacc_smoothed,yacc_smoothed,zacc_smoothed = smoothData(xacc,yacc,zacc)
+
+    # # Integrate the values to get velocity
+    # xvel,yvel,zvel = integrate_data(xacc,yacc,zacc,frame)
+
+    # # Integrate the velocity to get distance
+    # xdist,ydist,zdist = integrate_data(xvel,yvel,zvel,frame)
+
+    # # Is this close to the correct distance??
+    # # xdistsm,ydistsm,zdistsm = smoothData(xdist,ydist,zdist)
+
+    # # total distances
+    # x = xdist[-1]
+    # y = ydist[-1]    
+    # z = zdist[-1]
+
+    # # total distances, smoothed
+    # # xsm = xdistsm[-1]
+    # # ysm = ydistsm[-1]    
+    # # zsm = zdistsm[-1]
+
+    # # Distances, measured differently
+    # totaldistance = math.sqrt(x*x + y*y + z*z)
+    # totaldistance_no_z = math.sqrt(x*x + y*y)
+    # # totaldistancesm = math.sqrt(xsm*xsm + ysm*ysm + zsm*zsm)
+    # # totaldistancesm_no_z = math.sqrt(xsm*xsm + ysm*ysm)
+
+    # print("\nresults:")
+    # print("X Distance: %f" % x)
+    # print("Y Distance: %f" % y)
+    # print("Z Distance: %f" % z)
+    # print("Total Distance: %f" % totaldistance)
+    # print("Total Distance (no Z): %f" % totaldistance_no_z) # This one seems the most accurate!
+    # # print("Total Distance, Smoothed: %f" % totaldistancesm)
+    # # print("TotalDistance, smoothed (no Z): %f" % totaldistancesm_no_z)
+
+    # # Plotting the data to a graph to view
     # plot(frame,xacc,yacc,zacc,xvel,yvel,zvel,xdist,ydist,zdist)
     return
 
